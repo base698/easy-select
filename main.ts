@@ -16,14 +16,6 @@ export default class MyPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
-
 		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
 		const statusBarItemEl = this.addStatusBarItem();
 		statusBarItemEl.setText('Status Bar Text');
@@ -71,7 +63,15 @@ export default class MyPlugin extends Plugin {
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
 		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
+			//span.dataview.inline-field-key
+			//span.dataview.inline-field-value
+			//span.dataview.inline-field
+			console.log(evt.srcElement);
+			if (evt.srcElement.className.contains('inline-field')) {
+			    new SampleModal(this.app,evt.srcElement).open();
+			}
+
+
 		});
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
@@ -91,18 +91,100 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
+function getExcerciseSetting(contentEl:HTMLElement, changeFn:(arg: string)=>void): Setting {
+        return new Setting(contentEl)
+            .setName("Choose an option")
+            .addDropdown(dropdown => dropdown
+                .addOption("Bench", "Bench")
+                .addOption("Deadlift", "Deadlift")
+                .addOption("Straight Bar Curl", "Straight Bar Curl")
+                .addOption("Squat", "Squat")
+                .addOption("Pushups", "Pushups")
+                .addOption("Run", "Run")
+                .addOption("Bike", "Bike")
+                .addOption("Arnold Press", "Arnold Press")
+			    .onChange(changeFn));
+}
+
+
+function getNumberSetting(contentEl:HTMLElement, s:number, e:number, step:number, val: number,changeFn:(arg: number)=>void): Setting {
+        return new Setting(contentEl)
+            .setName("Choose an option")
+			.addSlider(slider => slider
+				.setLimits(s, e, step)
+				.setValue(val)
+				.setDynamicTooltip()
+				.onChange(changeFn));
+}
+
 class SampleModal extends Modal {
-	constructor(app: App) {
+	el: HTMLElement
+	result: string
+
+	constructor(app: App, el: HTMLElement) {
 		super(app);
+		this.el = el;
+		if(this.el.parentElement != null && (this.el.className.contains('key') 
+			|| this.el.className.contains('value'))) {
+			this.el = this.el.parentElement;
+		}
 	}
 
 	onOpen() {
 		const {contentEl} = this;
-		contentEl.setText('Woah!');
+		// handle cm-hmd-barelink
+		//contentEl.createEl("h1", { text: "Select an option" });
+
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (activeView) {
+		    const editor = activeView.editor;
+		    const cursor = editor.getCursor();
+		    const line = editor.getLine(cursor.line);
+
+		    let num = /(\d+)/.exec(line);
+			  let val;
+			  if(num) {
+				val = parseInt(num[1],10);
+			  } else {
+				val = 0;
+			  }
+
+			if(line.contains('Excercise')) {
+			  getExcerciseSetting(contentEl, (value:string) => {
+				this.result = value;
+			  });
+			} else if(line.contains('Weight')) {
+			  getNumberSetting(contentEl, 0,500, 2.5, val, (value:number) => {
+				this.result = `${value}`;
+			  });
+			} else if(line.contains('Sets') || line.contains('Reps')) {
+			  getNumberSetting(contentEl, 0,50, 1, val, (value:number) => {
+				this.result = `${value}`;
+			  });
+			} else {
+				this.close();
+			}
+		}
+
 	}
 
 	onClose() {
 		const {contentEl} = this;
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (activeView && this.result) {
+		    const editor = activeView.editor;
+		    const cursor = editor.getCursor();
+		    const line = editor.getLine(cursor.line);
+		    
+			const updatedLine = `${line.slice(0,line.indexOf('::'))}:: ${this.result}]`
+		    
+		    // Replace the entire line
+		    editor.replaceRange(updatedLine, 
+		        { line: cursor.line, ch: 0 }, 
+		        { line: cursor.line, ch: line.length }
+		    );
+		}
+			
 		contentEl.empty();
 	}
 }
