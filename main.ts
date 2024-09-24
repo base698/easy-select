@@ -16,10 +16,6 @@ export default class MyPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
 		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
 			id: 'open-sample-modal-simple',
@@ -96,6 +92,7 @@ function getExcerciseSetting(contentEl:HTMLElement, changeFn:(arg: string)=>void
             .setName("Choose an option")
             .addDropdown(dropdown => dropdown
                 .addOption("Bench", "Bench")
+                .addOption("Incline Bench", "Incline Bench")
                 .addOption("Deadlift", "Deadlift")
                 .addOption("Straight Bar Curl", "Straight Bar Curl")
                 .addOption("Squat", "Squat")
