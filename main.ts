@@ -96,7 +96,9 @@ function getExcerciseSetting(contentEl:HTMLElement, changeFn:(arg: string)=>void
                 .addOption("Deadlift", "Deadlift")
                 .addOption("Straight Bar Curl", "Straight Bar Curl")
                 .addOption("Squat", "Squat")
+                .addOption("Pullups", "Pullups")
                 .addOption("Pushups", "Pushups")
+				.addOption("Dumbbell Rows", "Dumbbell Rows")
                 .addOption("Run", "Run")
                 .addOption("Bike", "Bike")
                 .addOption("Arnold Press", "Arnold Press")
@@ -106,7 +108,7 @@ function getExcerciseSetting(contentEl:HTMLElement, changeFn:(arg: string)=>void
 
 function getNumberSetting(contentEl:HTMLElement, s:number, e:number, step:number, val: number,changeFn:(arg: number)=>void): Setting {
         return new Setting(contentEl)
-            .setName("Choose an option")
+            .setName(`Choose an option ${s} - ${e}`)
 			.addSlider(slider => slider
 				.setLimits(s, e, step)
 				.setValue(val)
@@ -151,13 +153,24 @@ class SampleModal extends Modal {
 				this.result = value;
 			  });
 			} else if(line.contains('Weight')) {
-			  getNumberSetting(contentEl, 0,500, 2.5, val, (value:number) => {
+			  getNumberSetting(contentEl, 300,500, 5, val, (value:number) => {
 				this.result = `${value}`;
 			  });
+			  getNumberSetting(contentEl, 190,300, 5, val, (value:number) => {
+				this.result = `${value}`;
+			  });
+			  getNumberSetting(contentEl, 35,300, 5, val, (value:number) => {
+				this.result = `${value}`;
+			  });
+
 			} else if(line.contains('Sets') || line.contains('Reps')) {
-			  getNumberSetting(contentEl, 0,50, 1, val, (value:number) => {
+			  getNumberSetting(contentEl, 0,15, 1, val, (value:number) => {
 				this.result = `${value}`;
 			  });
+			  getNumberSetting(contentEl, 15,50, 5, val, (value:number) => {
+				this.result = `${value}`;
+			  });
+
 			} else {
 				this.close();
 			}
